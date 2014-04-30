@@ -78,7 +78,7 @@ get_long_format <- function (qhts)
   return(result)
 }
 
-get_melt_data <- function (qhts, resp_type=c('raw', 'curvep', 'hill', 'mask'))
+get_melt_data <- function (qhts, resp_type=c('raw', 'curvep', 'hill', 'hill_fred', 'mask'))
 {
   col_names <- colnames(qhts)
   basic_cols <- c('CAS', 'uniqueID', 'Tox21AgencyID', 'Chemical.ID', 'Chemical.Name', 'Tox21.ID', 'Sample.ID', 'StructureID', 'readout', 'pathway')
@@ -143,6 +143,31 @@ get_melt_data <- function (qhts, resp_type=c('raw', 'curvep', 'hill', 'mask'))
         result$hill <- temp$hill
       
       
+    } else if (type == 'hill_fred')
+    {
+      y_cols <- grep("resp[0-9]+", col_names, value = TRUE)
+      
+      
+      hill_resps <- lapply(1:nrow(qhts), function(x) {
+        sapply(qhts[x, x_cols], function (y)
+          if (! is.na(qhts[x,]$k) )
+          {
+            qhts[x,]$v0 + (qhts[x,]$vmax - qhts[x,]$v0)*((10^y)*1000000)^qhts[x,]$n/(qhts[x,]$k^qhts[x,]$n + ((10^y)*1000000)^qhts[x,]$n)
+          } else
+          {
+            if (! is.na(y)) 
+            {
+              mean(unlist(qhts[x, y_cols]), na.rm=TRUE)
+            } else NA
+          }
+        )
+      }
+      )
+      hill_resps <- do.call("rbind", hill_resps)
+      colnames(hill_resps) <- sub("conc", "hill_fred", colnames(hill_resps))
+      temp <- cbind(qhts[, basic_cols], hill_resps)
+      temp <- melt(temp, id.var=basic_cols, value.name='hill_fred', variable.name='hill_fred_resps')
+      result$hill_fred <- temp$hill_fred
     } else if ( type == 'mask')
     {
       #y_cols <- c(paste('resp', "", seq(0,14), sep=""))
@@ -177,7 +202,7 @@ get_melt_data <- function (qhts, resp_type=c('raw', 'curvep', 'hill', 'mask'))
         temp <- cbind(qhts[, basic_cols], mask_resps)
         temp <- melt(temp, id.var=basic_cols, value.name='mask', variable.name='mask_resps')
         result$mask <- temp$mask
-    }
+    } 
   }
   
   return(result)
@@ -196,6 +221,7 @@ get_plot <- function (qhts_melt, mode=c('parallel', 'overlay'), plot_options=plo
     if (sum (plot_options %in% 'raw') == 1) p <- p + geom_line()
     if (sum (plot_options %in% 'curvep') == 1) p <- p + geom_line(aes(x=x, y=curvep, color=readout),  linetype=5)
     if (sum (plot_options %in% 'hill') == 1) p <- p + geom_line(aes(x=x, y=hill, color=readout), linetype=6)
+    if (sum (plot_options %in% 'hill_fred') == 1) p <- p + geom_line(aes(x=x, y=hill_fred, color=readout), linetype=6)
     if (sum (plot_options %in% 'mask') == 1) p <- p + geom_point(aes(x=x, y=mask, color=readout),shape = 4, size=pointsize*2)
     #p <- p + facet_grid(display_name ~ pathway)
     
@@ -208,6 +234,7 @@ get_plot <- function (qhts_melt, mode=c('parallel', 'overlay'), plot_options=plo
     if (sum (plot_options %in% 'raw') == 1) p <- p + geom_line()
     if (sum (plot_options %in% 'curvep') == 1) p <- p + geom_line(aes(x=x, y=curvep, color=path_readout),  linetype=5)
     if (sum (plot_options %in% 'hill') == 1) p <- p + geom_line(aes(x=x, y=hill, color=path_readout), linetype=6)
+    if (sum (plot_options %in% 'hill_fred') == 1) p <- p + geom_line(aes(x=x, y=hill_fred, color=path_readout), linetype=6)
     if (sum (plot_options %in% 'mask') == 1) p <- p + geom_point(aes(x=x, y=mask, color=path_readout),shape = 4, size=pointsize*2)
     #p <- p  + facet_wrap(~ display_name  , ncol=2)
     #p <- p + facet_grid(display_name ~. )
@@ -225,12 +252,13 @@ get_blank_data <- function (qhts_melt, n_page)
   if (! is.null(base$curvep) ) base$curvep <- 0
   if (! is.null(base$hill) ) base$hill <- 0
   if (! is.null(base$mask) ) base$mask <- 0
+  if (! is.null(base$hill_fred) ) base$hill_fred <- 0
   
   blank_n <- n_page - (length(nn) %% n_page)
   for (i in 1:blank_n)
   {
     base$display_name <- paste('zzzzz',".", i, sep="")
-    result <- rbind(result, base)
+    result <- rbind.fill(result, base)
   }
   return(result)
   

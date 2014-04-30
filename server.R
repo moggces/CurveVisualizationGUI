@@ -7,6 +7,8 @@ library(ggplot2)
 source("./source/load.R",  local=TRUE)
 source("./source/get.R",  local=TRUE)
 options(shiny.maxRequestSize=30*1024^2)
+
+# to add a new analysis method, edit plot_options, get_melt_data(), get_plot(), get_blank_data()
 ################
 
 shinyServer(function(input, output) {
@@ -73,7 +75,8 @@ shinyServer(function(input, output) {
   output$plot_options <- renderUI({
     selectInput("plt_opts", "Select line plotting options:", 
                 choices  = list( "raw"="raw", "curvep"="curvep",
-                                 "Hill 4-point"="hill"),
+                                 "Hill 4-point"="hill",
+                                 "Hill 4-point(fred)"="hill_fred"),
                 selected=c("raw"),
                 multiple = TRUE)
   })
