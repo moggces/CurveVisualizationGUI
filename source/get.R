@@ -5,10 +5,10 @@ get_id_type <- function (id)
   result <- 'unique'
   for (i in id)
   {
-    if (grepl("Tox21", i))
+    if (grepl("^Tox21_[0-9]{6}$", i, perl=TRUE))
     {
       result <- 'tox21'
-    } else if (grepl("NCGC",i)) 
+    } else if (grepl("^NCGC_[0-8]{8,]\\-[0-9]{2}$",i, perl=TRUE)) 
     {
       result <- 'ncgc'
     } else if (length(strsplit(i, "-")[[1]]) == 3 & ! grepl("[a-z|A-Z]", i, perl=TRUE) )

@@ -59,7 +59,7 @@ shinyUI(pageWithSidebar(
   mainPanel(
     
     tabsetPanel(
-      #tabPanel("Text", textOutput('temp')),
+      tabPanel("Text", dataTableOutput('temp')),
       tabPanel( 'Data', dataTableOutput('contents')),
       tabPanel( "Plot", plotOutput("plot", height="auto", width="500%"))
       
