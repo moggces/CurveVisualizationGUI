@@ -174,30 +174,47 @@ get_melt_data <- function (qhts, resp_type=c('raw', 'curvep', 'hill', 'hill_fred
       y_cols <- grep("resp[0-9]+", col_names, value = TRUE)
       
      
-        mask_resps <- qhts[, y_cols]
-        for ( x in 1:nrow(qhts) )
-        {
-          if( ! is.null (qhts[x,]$Mask.Flags) )
+      mask_resps <- qhts[, y_cols]
+      qhts[, 'mask'] <- qhts[, get_mask_column(qhts)]
+        
+      mask_resps <- lapply(1:nrow(qhts), function (x) {
+          if (qhts[x, 'mask'] != '')
           {
-            if ( qhts[x,]$Mask.Flags != ""  )
-            {
-              m <- ! as.logical(as.numeric((unlist(strsplit(qhts[x,]$Mask.Flags, " ")))))
-              #mask_resps[x, ][! is.na(mask_resps[x, ])][which(m)] <- NA
-              mask_resps[x, ][which(m)] <- NA
-            } 
-          } else if (! is.null (qhts[x,]$curvep_mask) )
-          {
-            if (qhts[x,]$curvep_mask != "")
-            {
-              m <- ! as.logical(as.numeric((unlist(strsplit(qhts[x,]$curvep_mask, " ")))))
-              #mask_resps[x, ][! is.na(mask_resps[x, ])][which(m)] <- NA
-              mask_resps[x, ][which(m)] <- NA
-            }
+            m <- ! as.logical(as.numeric((unlist(strsplit(qhts[x, 'mask'], " ")))))
+            mask_resps[x, ][which(m)] <- NA
           } else
           {
             mask_resps[x, ] <- NA
           }
+          return(mask_resps[x, ])
         }
+      )
+      mask_resps <- as.data.frame(do.call("rbind", mask_resps))
+      
+#         for ( x in 1:nrow(qhts) )
+#         {
+#           if( ! is.null (qhts[x,]$Mask.Flags) )
+#           {
+#             if ( qhts[x,]$Mask.Flags != ""  )
+#             {
+#               m <- ! as.logical(as.numeric((unlist(strsplit(qhts[x,]$Mask.Flags, " ")))))
+#               #mask_resps[x, ][! is.na(mask_resps[x, ])][which(m)] <- NA
+#               mask_resps[x, ][which(m)] <- NA
+#             } 
+#           } else if (! is.null (qhts[x,]$curvep_mask) )
+#           {
+#             if (qhts[x,]$curvep_mask != "")
+#             {
+#               m <- ! as.logical(as.numeric((unlist(strsplit(qhts[x,]$curvep_mask, " ")))))
+#               #mask_resps[x, ][! is.na(mask_resps[x, ])][which(m)] <- NA
+#               mask_resps[x, ][which(m)] <- NA
+#             }
+#           } else
+#           {
+#             mask_resps[x, ] <- NA
+#           }
+#         }
+
         colnames(mask_resps) <- sub("resp", "mask", colnames(mask_resps))
         temp <- cbind(qhts[, basic_cols], mask_resps)
         temp <- melt(temp, id.var=basic_cols, value.name='mask', variable.name='mask_resps')
@@ -209,8 +226,6 @@ get_melt_data <- function (qhts, resp_type=c('raw', 'curvep', 'hill', 'hill_fred
   
 }
 
-
-###########
 get_plot <- function (qhts_melt, mode=c('parallel', 'overlay'), plot_options=plot_options, fontsize=20, pointsize=3)
 {
   if (mode == 'parallel')
@@ -242,7 +257,6 @@ get_plot <- function (qhts_melt, mode=c('parallel', 'overlay'), plot_options=plo
   return(p)
 }
 
-############
 get_blank_data <- function (qhts_melt, n_page)
 {
   result <- qhts_melt
@@ -262,4 +276,19 @@ get_blank_data <- function (qhts_melt, n_page)
   }
   return(result)
   
+}
+
+###
+##
+get_mask_column <- function (qhts)
+{
+  result <- 'mask'
+  if ( nrow(qhts) == sum(qhts$mask == '') )
+  {
+    if (! is.null(qhts$curvep_mask))
+    {
+      result <- 'curvep_mask'
+    } 
+  }
+  return(result)
 }

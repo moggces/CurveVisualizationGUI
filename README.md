@@ -26,8 +26,8 @@ Additional Input
 - parent column: *parent* column
   - It is used to specify the data region that can be used to couple with the parent pathway (e.g., cytotoxicity data can be coupled with many pathways in the high-content assay)
   - The parent pathways are separated using '|' (e.g., SNOU|JAW)
-- mask column: *Mask.Flags* column
-  - If *Mask.Flags* column is not available, *curvep_mask* is used instead.
+- mask column: *mask* column
+  - If *mask* column is empty string, *curvep_mask* is used instead if available.
   - Currently only one mask is allowed.
 - curvep result columns (curvep optioin): *curvep_r[0-9]+* columns
 - Hill model result columns (hill 4-point option): *Zero.Activity*, *Inf.Activity*, *LogAC50*, *Hill.Coef* columns

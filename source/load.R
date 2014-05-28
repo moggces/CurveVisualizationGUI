@@ -1,5 +1,5 @@
 
-load_input_file <- function (file, mapping, pathway="", readout="")
+load_input_file <- function (file)
 {
   result <- read.delim(file, quote = "", stringsAsFactors=FALSE)
   #result <- join(subset(cebs_df, select=-CAS), subset(mapping, select=c(CAS, Tox21.ID, Chemical.Name,StructureID)), by="Tox21.ID",  match = "first")
@@ -16,6 +16,13 @@ load_input_file <- function (file, mapping, pathway="", readout="")
   } else
   {
     result$parent[is.na(result$parent)] <- ''
+  }
+  if (is.null(result$mask))
+  {
+    result[, "mask"] <- ''
+  } else
+  {
+    result[is.na(result$mask), "mask"] <- ''
   }
   return(result)
   

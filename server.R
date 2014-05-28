@@ -253,10 +253,11 @@ shinyServer(function(input, output) {
     return(result)
   })
   
-  output$temp <- renderText({
-    
-    result <- data_filter()
-    result <- unique(result$parent)
+  output$temp <- renderDataTable({
+    result <- data_loader()
+    #result <- data_filter()
+    #result <- data_melter()
+    #result <- unique(result$parent)
     return(result)
   })
   
