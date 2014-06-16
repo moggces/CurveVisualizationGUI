@@ -1,7 +1,8 @@
 CurveVisualizationGUI
 =====================
 
-A R Shiny interface to allow the user to visualize the concentration-response data in a line-point fashion. 
+A R Shiny interface to allow the user to visualize the concentration-response data in a line-point fashion.
+User can overlay or parallel pathways based on compounds. Or overlay compounds + parallel pathways. 
 
 Input
 -----
@@ -31,5 +32,6 @@ Additional Input
   - Currently only one mask is allowed.
 - curvep result columns (curvep optioin): *curvep_r[0-9]+* columns
 - Hill model result columns (hill 4-point option): *Zero.Activity*, *Inf.Activity*, *LogAC50*, *Hill.Coef* columns
+- *resp_l[0-9]+* and *resp_h[0-9]* can be used to automatically plot the error bars
 - unused columns will be kept. 
 
