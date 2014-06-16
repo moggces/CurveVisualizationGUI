@@ -245,7 +245,7 @@ get_plot <- function (qhts_melt, mode=c('parallel', 'overlay'), plot_options=plo
     p <- ggplot(qhts_melt, aes(x=x, y=raw, color=readout)) + geom_point(size=pointsize)+
       theme(text = element_text(size=fontsize) ) + scale_x_continuous('log10(conc(M))') + 
       scale_y_continuous('resp (%)')
-    if ( ! is.null(qhts_melt$rawl) & ! is.null(qhts_melt$rawh) ) p <- p + geom_errorbar(aes(ymin=rawl, ymax=rawh))  
+    if ( ! is.null(qhts_melt$rawl) & ! is.null(qhts_melt$rawh) ) p <- p + geom_errorbar(aes(ymin=rawl, ymax=rawh), width=0.05)  
     if (sum (plot_options %in% 'raw') == 1) p <- p + geom_line()
     if (sum (plot_options %in% 'curvep') == 1) p <- p + geom_line(aes(x=x, y=curvep, color=readout),  linetype=5)
     if (sum (plot_options %in% 'hill') == 1) p <- p + geom_line(aes(x=x, y=hill, color=readout), linetype=6)
@@ -259,7 +259,7 @@ get_plot <- function (qhts_melt, mode=c('parallel', 'overlay'), plot_options=plo
     p <- ggplot(qhts_melt, aes(x=x, y=raw, color=path_readout)) +  geom_point(size=pointsize) + 
       theme(text = element_text(size=fontsize) ) + scale_x_continuous('log10(conc(M))') + 
       scale_y_continuous('resp (%)')
-    if ( ! is.null(qhts_melt$rawl) & ! is.null(qhts_melt$rawh) ) p <- p + geom_errorbar(aes(ymin=rawl, ymax=rawh))
+    if ( ! is.null(qhts_melt$rawl) & ! is.null(qhts_melt$rawh) ) p <- p + geom_errorbar(aes(ymin=rawl, ymax=rawh), width=0.05)
     if (sum (plot_options %in% 'raw') == 1) p <- p + geom_line()
     if (sum (plot_options %in% 'curvep') == 1) p <- p + geom_line(aes(x=x, y=curvep, color=path_readout),  linetype=5)
     if (sum (plot_options %in% 'hill') == 1) p <- p + geom_line(aes(x=x, y=hill, color=path_readout), linetype=6)
@@ -275,7 +275,7 @@ get_plot <- function (qhts_melt, mode=c('parallel', 'overlay'), plot_options=plo
     p <- ggplot(qhts_melt, aes(x=x, y=raw, color=cmpd_readout)) +  geom_point(size=pointsize) + 
       theme(text = element_text(size=fontsize) ) + scale_x_continuous('log10(conc(M))') + 
       scale_y_continuous('resp (%)')
-    if ( ! is.null(qhts_melt$rawl) & ! is.null(qhts_melt$rawh) ) p <- p + geom_errorbar(aes(ymin=rawl, ymax=rawh))
+    if ( ! is.null(qhts_melt$rawl) & ! is.null(qhts_melt$rawh) ) p <- p + geom_errorbar(aes(ymin=rawl, ymax=rawh), width=0.05)
     if (sum (plot_options %in% 'raw') == 1) p <- p + geom_line()
     if (sum (plot_options %in% 'curvep') == 1) p <- p + geom_line(aes(x=x, y=curvep, color=cmpd_readout),  linetype=5)
     if (sum (plot_options %in% 'hill') == 1) p <- p + geom_line(aes(x=x, y=hill, color=cmpd_readout), linetype=6)
@@ -295,6 +295,8 @@ get_blank_data <- function (qhts_melt, n_page)
   if (! is.null(base$hill) ) base$hill <- 0
   if (! is.null(base$mask) ) base$mask <- 0
   if (! is.null(base$hill_fred) ) base$hill_fred <- 0
+  if (! is.null(base$rawl) ) base$rawl <- 0
+  if (! is.null(base$rawh) ) base$rawh <- 0
   
   blank_n <- n_page - (length(nn) %% n_page)
   for (i in 1:blank_n)
