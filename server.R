@@ -26,7 +26,7 @@ shinyServer(function(input, output) {
                          load_input_file(path)
                        }
       )
-      result <- do.call("rbind", result)
+      result <- do.call("rbind.fill", result)
 
     
 #     path <- inFile$datapath
@@ -155,10 +155,10 @@ shinyServer(function(input, output) {
     nrow <- length(unique(qhts$Chemical.ID))
     mode <- input$mode
     heightpx <- input$heightpx
-    if (mode == 'overlay')
+    if (mode == 'overlay' )
     {
       return(nrow * heightpx) # 350
-    } else if (mode == 'parallel')
+    } else if (mode == 'parallel' | mode == 'mixed')
     {
       return(nrow * heightpx) # 300
     }
@@ -173,7 +173,7 @@ shinyServer(function(input, output) {
     {
       #return("auto")
       return(1000)
-    } else if (mode == 'parallel')
+    } else if (mode == 'parallel'  | mode == 'mixed')
     {
       return(ncol * widthpx)
     }
@@ -194,6 +194,9 @@ shinyServer(function(input, output) {
     } else if (mode == 'parallel')
     {
       p <- p + facet_grid(display_name ~ pathway)
+    } else if (mode == 'mixed')
+    {
+      p <- p  + facet_wrap(~ pathway  , ncol=2)
     }
     print(p)
     #print(select_plot())
@@ -240,6 +243,9 @@ shinyServer(function(input, output) {
           p <- p + facet_grid(display_name ~ pathway)
           print(p)
         })
+        
+      } else if (mode == 'mixed') ## not done
+      {
         
       }
       

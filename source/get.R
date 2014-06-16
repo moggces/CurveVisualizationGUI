@@ -102,7 +102,19 @@ get_melt_data <- function (qhts, resp_type=c('raw', 'curvep', 'hill', 'hill_fred
         temp <- melt(temp, id.var=basic_cols, value.name='raw', variable.name='raw_resps')
         result$raw <- temp$raw
       
+      yl_cols <- grep("resp_l[0-9]+", col_names,  value = TRUE)
+      yh_cols <- grep("resp_h[0-9]+", col_names,  value = TRUE)
       
+      if (length(yl_cols) > 0 & length(yh_cols) > 0)
+      {
+        temp <- qhts[, c(basic_cols, yl_cols)]
+        temp <- melt(temp, id.var=basic_cols, value.name='rawl', variable.name='raw_resps')
+        result$rawl <- temp$rawl
+        
+        temp <- qhts[, c(basic_cols, yh_cols)]
+        temp <- melt(temp, id.var=basic_cols, value.name='rawh', variable.name='raw_resps')
+        result$rawh <- temp$rawh
+      }
       
     } else if (type == 'curvep')
     {
@@ -233,6 +245,7 @@ get_plot <- function (qhts_melt, mode=c('parallel', 'overlay'), plot_options=plo
     p <- ggplot(qhts_melt, aes(x=x, y=raw, color=readout)) + geom_point(size=pointsize)+
       theme(text = element_text(size=fontsize) ) + scale_x_continuous('log10(conc(M))') + 
       scale_y_continuous('resp (%)')
+    if ( ! is.null(qhts_melt$rawl) & ! is.null(qhts_melt$rawh) ) p <- p + geom_errorbar(aes(ymin=rawl, ymax=rawh))  
     if (sum (plot_options %in% 'raw') == 1) p <- p + geom_line()
     if (sum (plot_options %in% 'curvep') == 1) p <- p + geom_line(aes(x=x, y=curvep, color=readout),  linetype=5)
     if (sum (plot_options %in% 'hill') == 1) p <- p + geom_line(aes(x=x, y=hill, color=readout), linetype=6)
@@ -246,6 +259,7 @@ get_plot <- function (qhts_melt, mode=c('parallel', 'overlay'), plot_options=plo
     p <- ggplot(qhts_melt, aes(x=x, y=raw, color=path_readout)) +  geom_point(size=pointsize) + 
       theme(text = element_text(size=fontsize) ) + scale_x_continuous('log10(conc(M))') + 
       scale_y_continuous('resp (%)')
+    if ( ! is.null(qhts_melt$rawl) & ! is.null(qhts_melt$rawh) ) p <- p + geom_errorbar(aes(ymin=rawl, ymax=rawh))
     if (sum (plot_options %in% 'raw') == 1) p <- p + geom_line()
     if (sum (plot_options %in% 'curvep') == 1) p <- p + geom_line(aes(x=x, y=curvep, color=path_readout),  linetype=5)
     if (sum (plot_options %in% 'hill') == 1) p <- p + geom_line(aes(x=x, y=hill, color=path_readout), linetype=6)
@@ -253,6 +267,20 @@ get_plot <- function (qhts_melt, mode=c('parallel', 'overlay'), plot_options=plo
     if (sum (plot_options %in% 'mask') == 1) p <- p + geom_point(aes(x=x, y=mask, color=path_readout),shape = 4, size=pointsize*2)
     #p <- p  + facet_wrap(~ display_name  , ncol=2)
     #p <- p + facet_grid(display_name ~. )
+  } else if (mode == 'mixed')
+  {
+    qhts_melt <- qhts_melt[order(qhts_melt$pathway),]
+    qhts_melt$cmpd_readout <- paste(qhts_melt$Chemical.ID, "|\n", qhts_melt$Chemical.Name, "|\n", qhts_melt$readout,  sep="")
+    
+    p <- ggplot(qhts_melt, aes(x=x, y=raw, color=cmpd_readout)) +  geom_point(size=pointsize) + 
+      theme(text = element_text(size=fontsize) ) + scale_x_continuous('log10(conc(M))') + 
+      scale_y_continuous('resp (%)')
+    if ( ! is.null(qhts_melt$rawl) & ! is.null(qhts_melt$rawh) ) p <- p + geom_errorbar(aes(ymin=rawl, ymax=rawh))
+    if (sum (plot_options %in% 'raw') == 1) p <- p + geom_line()
+    if (sum (plot_options %in% 'curvep') == 1) p <- p + geom_line(aes(x=x, y=curvep, color=cmpd_readout),  linetype=5)
+    if (sum (plot_options %in% 'hill') == 1) p <- p + geom_line(aes(x=x, y=hill, color=cmpd_readout), linetype=6)
+    if (sum (plot_options %in% 'hill_fred') == 1) p <- p + geom_line(aes(x=x, y=hill_fred, color=cmpd_readout), linetype=6)
+    if (sum (plot_options %in% 'mask') == 1) p <- p + geom_point(aes(x=x, y=mask, color=cmpd_readout),shape = 4, size=pointsize*2)
   }
   return(p)
 }

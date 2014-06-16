@@ -16,7 +16,9 @@ shinyUI(pageWithSidebar(
   sidebarPanel(
     h4('Mode'),
     radioButtons("mode", "Select a pathway display mode:",
-                 choices = list("parallel"="parallel", "overlay"="overlay")),
+                 choices = list("parallel"="parallel",
+                                "overlay"="overlay", 
+                                "parallel pathway + overlay cmpd"="mixed")),
     tags$br(),
     
     h4('Input'),
@@ -28,9 +30,9 @@ shinyUI(pageWithSidebar(
     tags$hr(),
     
     sliderInput("widthpx", 
-                "width pixel/colmum", min = 150, max = 600, value = 300, step=50),
+                "width pixel/colmum", min = 50, max = 1000, value = 300, step=50),
     sliderInput("heightpx", 
-                "height pixel/colmum", min = 150, max = 600, value = 300, step=50),
+                "height pixel/colmum", min = 50, max = 1000, value = 300, step=50),
     
     tags$br(),
     
