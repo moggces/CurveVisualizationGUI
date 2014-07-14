@@ -1,7 +1,9 @@
 
 load_input_file <- function (file)
 {
-  result <- read.delim(file, quote = "", stringsAsFactors=FALSE)
+  skipl <- length(grep("^#", readLines(file)))
+  
+  result <- read.delim(file, quote = "",  skip=skipl, stringsAsFactors=FALSE)
   #result <- join(subset(cebs_df, select=-CAS), subset(mapping, select=c(CAS, Tox21.ID, Chemical.Name,StructureID)), by="Tox21.ID",  match = "first")
   #result$readout <- paste(readout, substr(result$Library, nchar(result$Library), nchar(result$Library) ), sep=".")
   #result$pathway <- pathway
