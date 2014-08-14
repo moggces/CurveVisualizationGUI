@@ -9,6 +9,7 @@ source("./source/get.R",  local=TRUE)
 options(shiny.maxRequestSize=30*1024^2)
 
 # to add a new analysis method, edit plot_options, get_melt_data(), get_plot(), get_blank_data()
+# know bugs: if Tox21_110433_1 alone ; there will be error 
 ################
 
 shinyServer(function(input, output) {
