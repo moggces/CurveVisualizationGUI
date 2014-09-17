@@ -191,13 +191,13 @@ shinyServer(function(input, output) {
     
     if (mode == 'overlay')
     {
-      p <- p  + facet_wrap(~ display_name  , ncol=2)
+      p <- p  + theme_bw(base_size = 20) + facet_wrap(~ display_name  , ncol=2)
     } else if (mode == 'parallel')
     {
-      p <- p + facet_grid(display_name ~ pathway)
+      p <- p + theme_bw(base_size = 20) + facet_grid(display_name ~ pathway)
     } else if (mode == 'mixed')
     {
-      p <- p  + facet_wrap(~ pathway  , ncol=2)
+      p <- p  + theme_bw(base_size = 20) + facet_wrap(~ pathway  , ncol=2)
     }
     print(p)
     #print(select_plot())
@@ -228,7 +228,7 @@ shinyServer(function(input, output) {
         lapply(names(pages), function (x) {
           sub <- result[result$display_name %in% pages[[x]],]
           p <- get_plot(sub, mode=mode, plot_options=plot_options, fontsize=8, pointsize=1)
-          p <- p  + facet_wrap(~ display_name  , ncol=2, nrow=3)
+          p <- p  + theme_bw(base_size = 8) + facet_wrap(~ display_name  , ncol=2, nrow=3) 
           print(p)
         })
         
@@ -241,7 +241,7 @@ shinyServer(function(input, output) {
         lapply(names(pages), function (x) {
           sub <- result[result$display_name %in% pages[[x]],]
           p <- get_plot(sub, mode=mode, plot_options=plot_options, fontsize=8, pointsize=1)
-          p <- p + facet_grid(display_name ~ pathway)
+          p <- p + theme_bw(base_size = 8) + facet_grid(display_name ~ pathway)
           print(p)
         })
         
