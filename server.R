@@ -23,8 +23,18 @@ shinyServer(function(input, output) {
       result <- lapply(1:nrow(inFile),
                        function (x)
                        {
+                         rawname <- inFile[[x, 'name']]
                          path <- inFile[[x, 'datapath']]
-                         load_input_file(path)
+                         
+                         if (grepl("RData", rawname))
+                         {
+                           load(path)
+                           cebs <- check_data_input(cebs)
+                           return(cebs) # predefined
+                         } else
+                         {
+                           load_input_file(path)
+                         }
                        }
       )
       result <- do.call("rbind.fill", result)
@@ -259,7 +269,7 @@ shinyServer(function(input, output) {
     #result <- data_loader()
     return(result)
   })
-  
+
   output$temp <- renderDataTable({
     result <- data_loader()
     #result <- data_filter()
