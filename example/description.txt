@@ -1,0 +1,4 @@
+These are results from high content screening
+This assay produced four endpoints: NBD, TBC, TOG, TPC.
+NBD represents the cytotoxicity. 
+The researchers are interested in checking the eactives in TBC, TPC, and TOG, which are independent of cytotoxicity. 

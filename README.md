@@ -4,10 +4,21 @@ CurveVisualizationGUI
 A R Shiny interface to allow the user to visualize the concentration-response data in a line-point fashion.
 User can overlay or parallel pathways based on compounds. Or overlay compounds + parallel pathways. 
 
+![alt text](example/interface.png)
+
+Usage
+-----
+sample files are in the example folder
+
+- download the files in GitHub. 
+- extract the zip file in a folder and make the folder as working directory 
+- library(shiny)
+- runApp()
+
 Input
 -----
 
-Tab-delimited files with five sets of required columns:  
+Tab-delimited files (or RData files) with five sets of required columns:  
 
 - compound identification columns: *Chemical.ID* and *Chemical.Name* columns. This is the basic unit that will be presented as a plot.  
 - concentration columns: *conc[0-9]+* columns (e.g., conc0, conc1, conc2, ... etc.)
