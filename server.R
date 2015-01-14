@@ -3,6 +3,7 @@ library(shiny)
 library(plyr)
 library(reshape2)
 library(ggplot2)
+library(scales)
 
 source("./source/load.R",  local=TRUE)
 source("./source/get.R",  local=TRUE)
@@ -39,11 +40,6 @@ shinyServer(function(input, output) {
       )
       result <- do.call("rbind.fill", result)
 
-    
-#     path <- inFile$datapath
-#     #result <- data.frame()
-#     result <- NULL
-#     result <- load_input_file(path)
     return(result)
   })
 
@@ -122,6 +118,7 @@ shinyServer(function(input, output) {
     show_outlier <- input$showOutlier
     if (show_outlier) plot_options <- c(plot_options, 'mask')
     use_parent <- input$useParent
+   
     
     qhts <- data_filter()
     
@@ -134,32 +131,6 @@ shinyServer(function(input, output) {
     return(result)
   })
   
-#   getVarHeight <- function() {
-#     qhts <- data_filter()
-#     nrow <- length(unique(qhts$Chemical.ID))
-#     mode <- input$mode
-#     if (mode == 'overlay')
-#     {
-#       return(nrow * 150)
-#     } else if (mode == 'parallel')
-#     {
-#       return(nrow * 300)
-#     }
-#   }
-#   
-#   getVarWidth <- function() {
-#     qhts <- data_filter()
-#     mode <- input$mode
-#     ncol <- length(unique(qhts$pathway))
-#     if (mode == 'overlay')
-#     {
-#       #return("auto")
-#       return(ncol * 300)
-#     } else if (mode == 'parallel')
-#     {
-#       return(ncol * 600)
-#     }
-#   }
   
   getVarHeight <- reactive({
     qhts <- data_filter()
@@ -195,9 +166,17 @@ shinyServer(function(input, output) {
     plot_options <- input$plt_opts
     show_outlier <- input$showOutlier
     if (show_outlier) plot_options <- c(plot_options, 'mask')
+    rm_raw_color <- input$rmRawColor
+    rm_raw_line <- input$rmRawLine
+    hl_pod <- input$hlpod
+    hd_error_bar <- input$hdErrorBar
+    
+    # paras
+    paras <- list(rm_raw_color=rm_raw_color, rm_raw_line=rm_raw_line,hl_pod=hl_pod, hd_error_bar=hd_error_bar )
+    
     
     result <- data_melter()
-    p <- get_plot(result, mode=mode, plot_options=plot_options, fontsize=20, pointsize=3)
+    p <- get_plot(result, mode=mode, plot_options=plot_options, fontsize=20, pointsize=3, paras=paras)
     
     if (mode == 'overlay')
     {
@@ -222,11 +201,13 @@ shinyServer(function(input, output) {
       show_outlier <- input$showOutlier
       if (show_outlier) plot_options <- c(plot_options, 'mask')
       
-      #height <- getVarHeight()
-      #width <- getVarWidth()
-      #pdf(file=file, width=width/96, height=height/96)
+      rm_raw_color <- input$rmRawColor
+      rm_raw_line <- input$rmRawLine
+      hl_pod <- input$hlpod
+      hd_error_bar <- input$hdErrorBar
       
-      #pdf(file=file, paper = "USr")
+      # paras
+      paras <- list(rm_raw_color=rm_raw_color, rm_raw_line=rm_raw_line,hl_pod=hl_pod, hd_error_bar=hd_error_bar )
       
       pdf(file=file)
       
@@ -237,7 +218,7 @@ shinyServer(function(input, output) {
         pages <- split(nn, ceiling(seq_along(nn)/n_page))
         lapply(names(pages), function (x) {
           sub <- result[result$display_name %in% pages[[x]],]
-          p <- get_plot(sub, mode=mode, plot_options=plot_options, fontsize=8, pointsize=1)
+          p <- get_plot(sub, mode=mode, plot_options=plot_options, fontsize=8, pointsize=1, paras=paras)
           p <- p  + theme_bw(base_size = 8) + facet_wrap(~ display_name  , ncol=2, nrow=3) 
           print(p)
         })
@@ -250,7 +231,7 @@ shinyServer(function(input, output) {
         pages <- split(nn, ceiling(seq_along(nn)/n_page))
         lapply(names(pages), function (x) {
           sub <- result[result$display_name %in% pages[[x]],]
-          p <- get_plot(sub, mode=mode, plot_options=plot_options, fontsize=8, pointsize=1)
+          p <- get_plot(sub, mode=mode, plot_options=plot_options, fontsize=8, pointsize=1, paras=paras)
           p <- p + theme_bw(base_size = 8) + facet_grid(display_name ~ pathway)
           print(p)
         })

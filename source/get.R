@@ -80,14 +80,19 @@ get_long_format <- function (qhts)
 
 get_melt_data <- function (qhts, resp_type=c('raw', 'curvep', 'hill', 'hill_fred', 'mask'))
 {
+
+
+  # the columns won't be melted
   col_names <- colnames(qhts)
-  basic_cols <- c('CAS', 'uniqueID', 'Tox21AgencyID', 'Chemical.ID', 'Chemical.Name', 'Tox21.ID', 'Sample.ID', 'StructureID', 'readout', 'pathway')
-  
+  basic_cols <- c('CAS', 'uniqueID', 'Tox21AgencyID', 'Chemical.ID', 'Chemical.Name',
+                  'Tox21.ID', 'Sample.ID', 'StructureID', 'readout', 'pathway', 
+                  'curvep_pod', 'curvep_thr')
   basic_cols <- intersect(col_names, basic_cols)
   
+  # the X columns
   x_cols <- grep("conc[0-9]+", col_names, value = TRUE)
-  #x_cols <- c(paste('conc', "", seq(0,14), sep=""))
-  
+
+  # to melt
   result <- qhts[, c(basic_cols, x_cols)]
   result <- melt(result, id.var=basic_cols, value.name='x', variable.name='concs')
   
@@ -105,7 +110,7 @@ get_melt_data <- function (qhts, resp_type=c('raw', 'curvep', 'hill', 'hill_fred
       yl_cols <- grep("resp_l[0-9]+", col_names,  value = TRUE)
       yh_cols <- grep("resp_h[0-9]+", col_names,  value = TRUE)
       
-      if (length(yl_cols) > 0 & length(yh_cols) > 0)
+      if (length(yl_cols) > 0 & length(yh_cols) > 0 )
       {
         temp <- qhts[, c(basic_cols, yl_cols)]
         temp <- melt(temp, id.var=basic_cols, value.name='rawl', variable.name='raw_resps')
@@ -188,9 +193,10 @@ get_melt_data <- function (qhts, resp_type=c('raw', 'curvep', 'hill', 'hill_fred
      
       mask_resps <- qhts[, y_cols]
       qhts[, 'mask'] <- qhts[, get_mask_column(qhts)]
-        
+      qhts[is.na(qhts[, 'mask']), 'mask'] <- '' # rbind.all() will make string column become NA
+      
       mask_resps <- lapply(1:nrow(qhts), function (x) {
-          if (qhts[x, 'mask'] != '')
+          if (qhts[x, 'mask'] != '') 
           {
             m <- ! as.logical(as.numeric((unlist(strsplit(qhts[x, 'mask'], " ")))))
             mask_resps[x, ][which(m)] <- NA
@@ -203,30 +209,6 @@ get_melt_data <- function (qhts, resp_type=c('raw', 'curvep', 'hill', 'hill_fred
       )
       mask_resps <- as.data.frame(do.call("rbind", mask_resps))
       
-#         for ( x in 1:nrow(qhts) )
-#         {
-#           if( ! is.null (qhts[x,]$Mask.Flags) )
-#           {
-#             if ( qhts[x,]$Mask.Flags != ""  )
-#             {
-#               m <- ! as.logical(as.numeric((unlist(strsplit(qhts[x,]$Mask.Flags, " ")))))
-#               #mask_resps[x, ][! is.na(mask_resps[x, ])][which(m)] <- NA
-#               mask_resps[x, ][which(m)] <- NA
-#             } 
-#           } else if (! is.null (qhts[x,]$curvep_mask) )
-#           {
-#             if (qhts[x,]$curvep_mask != "")
-#             {
-#               m <- ! as.logical(as.numeric((unlist(strsplit(qhts[x,]$curvep_mask, " ")))))
-#               #mask_resps[x, ][! is.na(mask_resps[x, ])][which(m)] <- NA
-#               mask_resps[x, ][which(m)] <- NA
-#             }
-#           } else
-#           {
-#             mask_resps[x, ] <- NA
-#           }
-#         }
-
         colnames(mask_resps) <- sub("resp", "mask", colnames(mask_resps))
         temp <- cbind(qhts[, basic_cols], mask_resps)
         temp <- melt(temp, id.var=basic_cols, value.name='mask', variable.name='mask_resps')
@@ -238,50 +220,96 @@ get_melt_data <- function (qhts, resp_type=c('raw', 'curvep', 'hill', 'hill_fred
   
 }
 
-get_plot <- function (qhts_melt, mode=c('parallel', 'overlay'), plot_options=plot_options, fontsize=20, pointsize=3)
+get_plot <- function (qhts_melt, mode=c('parallel', 'overlay', 'mixed'), plot_options=plot_options, fontsize=20, pointsize=3, paras)
 {
+  
+  rm_raw_color <- paras$rm_raw_color
+  rm_raw_line <- paras$rm_raw_line
+  hl_pod <- paras$hl_pod 
+  hd_error_bar <- paras$hd_error_bar
+  
   if (mode == 'parallel')
   {
-    p <- ggplot(qhts_melt, aes(x=x, y=raw, color=readout)) + geom_point(size=pointsize)+
-      theme(text = element_text(size=fontsize) ) + scale_x_continuous('log10(conc(M))') + 
-      scale_y_continuous('resp (%)')
-    if ( ! is.null(qhts_melt$rawl) & ! is.null(qhts_melt$rawh) ) p <- p + geom_errorbar(aes(ymin=rawl, ymax=rawh), width=0.05)  
-    if (sum (plot_options %in% 'raw') == 1) p <- p + geom_line()
+    # base set
+#     p <- ggplot(qhts_melt, aes(x=x, y=raw, color=readout)) + 
+#       theme(text = element_text(size=fontsize) ) + scale_y_continuous('resp (%)')  + 
+#       scale_x_continuous('log10(conc(M))')
+      #scale_x_continuous('uM',  labels = math_format(10^.x)) + 
+      #annotation_logticks(sides = "b") 
+      
+#     if (rm_raw_color)
+#     {
+#       p <- p + geom_point(size=pointsize, color='black')
+#     } else { p <- p + geom_point(size=pointsize, aes(color=readout)) }
+    
+    if (rm_raw_color)
+    {
+      p <- ggplot(qhts_melt, aes(x=x, y=raw), color='black') + geom_point(size=pointsize, alpha=0.7) 
+      
+    } else
+    {
+      p <- ggplot(qhts_melt, aes(x=x, y=raw, color=readout)) + geom_point(size=pointsize, alpha=0.7) 
+     }
+ 
+    
+    if (! hd_error_bar & ! is.null(qhts_melt$rawl) & ! is.null(qhts_melt$rawh) ) p <- p + geom_errorbar(aes(ymin=rawl, ymax=rawh), width=0.05)  
+    if (sum (plot_options %in% 'raw') == 1 & ! rm_raw_line ) p <- p + geom_line()
     if (sum (plot_options %in% 'curvep') == 1) p <- p + geom_line(aes(x=x, y=curvep, color=readout),  linetype=5)
     if (sum (plot_options %in% 'hill') == 1) p <- p + geom_line(aes(x=x, y=hill, color=readout), linetype=6)
     if (sum (plot_options %in% 'hill_fred') == 1) p <- p + geom_line(aes(x=x, y=hill_fred, color=readout), linetype=6)
     if (sum (plot_options %in% 'mask') == 1) p <- p + geom_point(aes(x=x, y=mask, color=readout),shape = 4, size=pointsize*2)
+    if (hl_pod & ! is.null(qhts_melt$curvep_pod) & ! is.null(qhts_melt$curvep_thr)) p <- p + geom_point(aes(x=curvep_pod, y=curvep_thr), shape=7, size=pointsize*2, color='blue')
     #p <- p + facet_grid(display_name ~ pathway)
     
   } else if (mode == 'overlay')
   {
     qhts_melt$path_readout <- paste(qhts_melt$pathway, "|\n", qhts_melt$readout, sep="")
-    p <- ggplot(qhts_melt, aes(x=x, y=raw, color=path_readout)) +  geom_point(size=pointsize) + 
-      theme(text = element_text(size=fontsize) ) + scale_x_continuous('log10(conc(M))') + 
-      scale_y_continuous('resp (%)')
-    if ( ! is.null(qhts_melt$rawl) & ! is.null(qhts_melt$rawh) ) p <- p + geom_errorbar(aes(ymin=rawl, ymax=rawh), width=0.05)
-    if (sum (plot_options %in% 'raw') == 1) p <- p + geom_line()
+    
+    if (rm_raw_color)
+    {
+      p <- ggplot(qhts_melt, aes(x=x, y=raw), color='black') + geom_point(size=pointsize, alpha=0.7) 
+      
+    } else
+    {
+      p <- ggplot(qhts_melt, aes(x=x, y=raw, color=path_readout)) + geom_point(size=pointsize, alpha=0.7) 
+    }
+    
+    if ( ! hd_error_bar & ! is.null(qhts_melt$rawl) & ! is.null(qhts_melt$rawh) ) p <- p + geom_errorbar(aes(ymin=rawl, ymax=rawh), width=0.05)
+    if (sum (plot_options %in% 'raw') == 1 & ! rm_raw_line ) p <- p + geom_line()
     if (sum (plot_options %in% 'curvep') == 1) p <- p + geom_line(aes(x=x, y=curvep, color=path_readout),  linetype=5)
     if (sum (plot_options %in% 'hill') == 1) p <- p + geom_line(aes(x=x, y=hill, color=path_readout), linetype=6)
     if (sum (plot_options %in% 'hill_fred') == 1) p <- p + geom_line(aes(x=x, y=hill_fred, color=path_readout), linetype=6)
     if (sum (plot_options %in% 'mask') == 1) p <- p + geom_point(aes(x=x, y=mask, color=path_readout),shape = 4, size=pointsize*2)
-    #p <- p  + facet_wrap(~ display_name  , ncol=2)
-    #p <- p + facet_grid(display_name ~. )
+    if (hl_pod & ! is.null(qhts_melt$curvep_pod) & ! is.null(qhts_melt$curvep_thr)) p <- p + geom_point(aes(x=curvep_pod, y=curvep_thr), shape=7, size=pointsize*2, color='blue')
   } else if (mode == 'mixed')
   {
     qhts_melt <- qhts_melt[order(qhts_melt$pathway),]
     qhts_melt$cmpd_readout <- paste(qhts_melt$Chemical.ID, "|\n", qhts_melt$Chemical.Name, "|\n", qhts_melt$readout,  sep="")
     
-    p <- ggplot(qhts_melt, aes(x=x, y=raw, color=cmpd_readout)) +  geom_point(size=pointsize) + 
-      theme(text = element_text(size=fontsize) ) + scale_x_continuous('log10(conc(M))') + 
-      scale_y_continuous('resp (%)')
-    if ( ! is.null(qhts_melt$rawl) & ! is.null(qhts_melt$rawh) ) p <- p + geom_errorbar(aes(ymin=rawl, ymax=rawh), width=0.05)
-    if (sum (plot_options %in% 'raw') == 1) p <- p + geom_line()
+    # base set
+    if (rm_raw_color)
+    {
+      p <- ggplot(qhts_melt, aes(x=x, y=raw), color='black') + geom_point(size=pointsize, alpha=0.7) 
+      
+    } else
+    {
+      p <- ggplot(qhts_melt, aes(x=x, y=raw, color=cmpd_readout)) + geom_point(size=pointsize, alpha=0.7) 
+    }
+    
+    if ( ! hd_error_bar & ! is.null(qhts_melt$rawl) & ! is.null(qhts_melt$rawh) ) p <- p + geom_errorbar(aes(ymin=rawl, ymax=rawh), width=0.05)
+    if (sum (plot_options %in% 'raw') == 1 & ! rm_raw_line ) p <- p + geom_line()
     if (sum (plot_options %in% 'curvep') == 1) p <- p + geom_line(aes(x=x, y=curvep, color=cmpd_readout),  linetype=5)
     if (sum (plot_options %in% 'hill') == 1) p <- p + geom_line(aes(x=x, y=hill, color=cmpd_readout), linetype=6)
     if (sum (plot_options %in% 'hill_fred') == 1) p <- p + geom_line(aes(x=x, y=hill_fred, color=cmpd_readout), linetype=6)
     if (sum (plot_options %in% 'mask') == 1) p <- p + geom_point(aes(x=x, y=mask, color=cmpd_readout),shape = 4, size=pointsize*2)
+    if (hl_pod & ! is.null(qhts_melt$curvep_pod) & ! is.null(qhts_melt$curvep_thr)) p <- p + geom_point(aes(x=curvep_pod, y=curvep_thr), shape=7, size=pointsize*2, color='blue')
   }
+
+  p <- p  + theme(text = element_text(size=fontsize) ) + 
+    scale_y_continuous('resp (%)')  + 
+    #scale_x_continuous('log10(conc(M))')
+    scale_x_continuous('uM',  labels = math_format(10^(.x+6))) + 
+    annotation_logticks(sides = "b") 
   return(p)
 }
 

@@ -53,6 +53,14 @@ shinyUI(pageWithSidebar(
       uiOutput("plot_options"),
       checkboxInput("showOutlier", "cross outliers", TRUE)
     ),
+    
+    h4('Others'),
+    checkboxInput("rmRawColor", "remove raw data colors", FALSE),
+    checkboxInput("rmRawLine", "remove raw data lines", FALSE),
+    checkboxInput("hdErrorBar", "hide error bars", FALSE),
+    checkboxInput("hlpod", "highlight PODs", FALSE), 
+    
+    
     br(),
     downloadButton('downloadPlot', 'Save Plot')
   ),
